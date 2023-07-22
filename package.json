@@ -1,0 +1,23 @@
+{
+  "name": "game-of-life",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "rebuild": "esbuild src/index.js --bundle --outdir=bundle --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kvaigonee/Game-of-life.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kvaigonee/Game-of-life/issues"
+  },
+  "homepage": "https://github.com/Kvaigonee/Game-of-life#readme",
+  "devDependencies": {
+    "esbuild": "^0.18.15"
+  }
+}
