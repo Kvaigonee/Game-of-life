@@ -4,6 +4,7 @@ import vertexShaderSource from "./Render/Shader/VertexShaderSource";
 import fragmentShaderSource from "./Render/Shader/FragmentShaderSource";
 import Mat4 from "./Math/Mat4";
 import GLViewport from "./Render/GLViewport";
+import Game from "./Game";
 
 
 
@@ -24,6 +25,10 @@ import GLViewport from "./Render/GLViewport";
     }
 
     //console.log("Rebuild")
+
+    window.onload = () => {
+        const game = new Game();
+    }
 
     const vertexShader = GLShader.createVertex(gl, vertexShaderSource);
     const fragmentShader = GLShader.createFragment(gl, fragmentShaderSource);
@@ -57,7 +62,7 @@ import GLViewport from "./Render/GLViewport";
         1, 1, gl.RGBA, gl.UNSIGNED_BYTE, colorData);
 
     let buffer = gl.createBuffer();
-    if(buffer === null) throw new Error("Buffer was not created!");
+    if (buffer === null) throw new Error("Buffer was not created!");
 
 
     const bufferData = new Float32Array([
