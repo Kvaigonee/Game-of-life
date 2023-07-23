@@ -6,8 +6,31 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Game of life</title>
+
+    <style>
+        #render {
+            position: absolute;
+            z-index: 1;
+        }
+
+        #controls {
+            position: absolute;
+            z-index: 2;
+        }
+    </style>
 </head>
 <body>
+
+<div id="render">
+    <canvas id="render-area"></canvas>
+</div>
+
+<div id="controls">
+
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+</div>
+
 <script src="bundle/index.js"></script>
 </body>
 </html>
