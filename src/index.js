@@ -9,7 +9,9 @@ import Game from "./Game";
 
 
 (() => {
-    let canvas = document.getElementById("render-area");
+
+    const game = new Game();
+/*    let canvas = document.getElementById("render-area");
 
     if (!canvas) {
         canvas = document.createElement("canvas");
@@ -107,8 +109,6 @@ import Game from "./Game";
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, glViewPort.width, glViewPort.height);
 
-        // Clear the canvas
-        gl.clearColor(0.5, 0.5, 0.5, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(program);
@@ -122,7 +122,7 @@ import Game from "./Game";
         let count = 6;
 
         gl.drawArrays(gl.TRIANGLES, offset, count);
-    }, 100);
+    }, 100);*/
 
 })();
 

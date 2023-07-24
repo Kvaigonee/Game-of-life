@@ -133,23 +133,23 @@ export default class Mat4 {
     }
 
     static translate(m, tx, ty, tz) {
-        return m4.multiply(m, m4.translation(tx, ty, tz));
+        return Mat4.multiply(m, Mat4.translation(tx, ty, tz));
     }
 
     static xRotate(m, angleInRadians) {
-        return m4.multiply(m, m4.xRotation(angleInRadians));
+        return Mat4.multiply(m, Mat4.xRotation(angleInRadians));
     }
 
     static yRotate(m, angleInRadians) {
-        return m4.multiply(m, m4.yRotation(angleInRadians));
+        return Mat4.multiply(m, Mat4.yRotation(angleInRadians));
     }
 
     static zRotate(m, angleInRadians) {
-        return m4.multiply(m, m4.zRotation(angleInRadians));
+        return Mat4.multiply(m, Mat4.zRotation(angleInRadians));
     }
 
     static scale(m, sx, sy, sz) {
-        return m4.multiply(m, m4.scaling(sx, sy, sz));
+        return Mat4.multiply(m, Mat4.scaling(sx, sy, sz));
     }
 
     static inverse(m) {

@@ -41,6 +41,6 @@ export default class GLViewport {
      *
      */
     _onWindowResize() {
-        this._updateSize();
+        //this._updateSize();
     }
 }

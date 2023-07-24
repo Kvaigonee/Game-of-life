@@ -1,16 +1,11 @@
 import GLViewport from "./GLViewport";
+import GLPipelineState from "./GLPipelineState";
+import Mat4 from "../Math/Mat4";
 
 
 export default class GLRenderer {
     /**
-     *
-     * @type {string}
-     * @private
-     */
-    _CANVAS_ID = "render_area";
-
-    /**
-     *
+     * @type {GLViewport}
      * @private
      */
     _glViewPort;
@@ -19,49 +14,68 @@ export default class GLRenderer {
      *
      * @private
      */
-    _canvas;
+    _pipelineState;
+
+    /**
+     *
+     * @type {number}
+     * @private
+     */
+    _gridCols = 1000;
+
+    /**
+     *
+     * @type {number}
+     * @private
+     */
+    _gridRows = 1000;
 
     /**
      *
      * @private
      */
-    _gl;
+    _camera;
 
     /**
      *
+     * @type {number}
      * @private
      */
-    _texture;
+    _gridWidth = 2000;
 
     /**
      *
+     * @type {number}
      * @private
      */
-    _nextTexture;
-
-    /**
-     *
-     * @private
-     */
-    _buffer;
+    _gridHeight = 2000;
 
     /**
      *
      */
-    constructor(gridW, gridH) {
-        this._canvas = this._createCanvas(this._CANVAS_ID);
-        this._gl = this._createContext();
-        this._glViewPort = new GLViewport(this._canvas);
+    constructor() {
+        this._pipelineState = new GLPipelineState();
+        this._glViewPort = new GLViewport(this._pipelineState.canvas);
+        this._camera = Mat4.translation(0, 0, 0);
 
-        this._texture = this._gl.createTexture();
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
-        this._setTextureParams();
-        this._updateTextureSize(gridW, gridH);
+        this._updateBufferGeometry();
+        this._updateTextureSize();
+    }
 
+    /**
+     *
+     * @returns {*}
+     */
+    get camera() {
+        return this._camera;
+    }
 
-        this._nextTexture = this._gl.createTexture();
+    get countCols() {
+        return this._gridCols;
+    }
 
-        this._buffer = this._createBuffer();
+    get countRows() {
+        return this._gridRows;
     }
 
     /**
@@ -75,96 +89,107 @@ export default class GLRenderer {
             ? new Uint8Array([0, 0, 0, 255])
             : new Uint8Array([0, 255, 0, 255]);
 
-        this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, x, y,
-            1, 1, this._gl.RGBA, this._gl.UNSIGNED_BYTE, colorData);
-    }
-
-
-    /**
-     *
-     * @returns {HTMLElement}
-     * @private
-     */
-    _createCanvas() {
-        let canvas = document.getElementById(this._CANVAS_ID);
-
-        if (!canvas) {
-            canvas = document.createElement("canvas");
-            document.body.appendChild(canvas);
-        }
-
-        return canvas;
-    }
-
-    /**
-     *
-     * @returns {*}
-     * @private
-     */
-    _createContext() {
-        if (!this._canvas) {
-            throw new Error("Get context before init canvas!");
-        }
-
-        const gl = this._canvas.getContext("webgl2");
-
-        if (!gl) {
-            throw new Error("Get context error!");
-        }
-
-        return gl;
-    }
-
-
-
-    _setTextureParams() {
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, this._gl.CLAMP_TO_EDGE);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, this._gl.CLAMP_TO_EDGE);
-    }
-
-
-    _updateTextureSize(w, h) {
-        this._gl.texImage2D(
-            this._gl.TEXTURE_2D,
-            0,
-            this._gl.RGBA,
-            w,
-            h,
-            0,
-            this._gl.RGBA,
-            this._gl.UNSIGNED_BYTE,
-            null
+        this._pipelineState.gl.texSubImage2D(
+            this._pipelineState.gl.TEXTURE_2D, 0, x,
+            y, 1, 1,
+            this._pipelineState.gl.RGBA, this._pipelineState.gl.UNSIGNED_BYTE,
+            colorData
         );
     }
 
-    _createBuffer() {
-        const buffer = this._gl.createBuffer();
-        if (buffer === null) throw new Error("Buffer was not created!");
 
-        return buffer;
+    /**
+     *
+     * @param w
+     * @param h
+     */
+    setGridSize(w, h) {
+        this._gridCols = w;
+        this._gridRows = h;
+
+        this._updateBufferGeometry();
     }
 
-    _updateBufferGeometry(w, h) {
+    /**
+     *
+     * @param w
+     * @param h
+     */
+    setSize(w, h) {
+        this._gridWidth = w;
+        this._gridHeight = h;
+
+        this._updateBufferGeometry();
+    }
+
+    /**
+     *
+     */
+    draw() {
+        const gl = this._pipelineState.gl;
+
+        gl.viewport(0, 0, this._glViewPort.width, this._glViewPort.height);
+
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(this._pipelineState.program);
+
+
+        gl.uniformMatrix4fv(this._pipelineState.matrixLocation, false, this._camera);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    /**
+     *
+     * @private
+     */
+    _updateBufferGeometry() {
+        let pixelWidth = 2 / this._glViewPort.width;
+        let pixelHeight = 2 / this._glViewPort.height;
+
+        const x1 = -1;
+        const y1 = -1;
+
+        const x2 = (this._gridWidth * pixelWidth - 1);
+        const y2 = (this._gridHeight * pixelHeight - 1);
 
         const bufferData = new Float32Array([
-            -0.7, -0.7, 0,
+            x1, y1, 0,
             0, 1,
-            -0.7, 0.7, 0,
+            x1, y2, 0,
             0, 0,
-            0.7, 0.7, 0,
+            x2, y2, 0,
             1, 0,
-            0.7, 0.7, 0,
+            x2, y2, 0,
             1, 0,
-            0.7, -0.7, 0,
+            x2, y1, 0,
             1, 1,
-            -0.7, -0.7, 0,
+            x1, y1, 0,
             0, 1,
         ]);
 
-        this._gl.bufferData(this._gl.ARRAY_BUFFER, bufferData, this._gl.STATIC_DRAW);
+        const gl = this._pipelineState.gl;
+
+        gl.bufferData(gl.ARRAY_BUFFER, bufferData, gl.STATIC_DRAW);
     }
 
+    /**
+     *
+     * @private
+     */
+    _updateTextureSize() {
+        this._pipelineState.gl.texImage2D(
+            this._pipelineState.gl.TEXTURE_2D,
+            0,
+            this._pipelineState.gl.RGBA,
+            this._gridCols + 2,
+            this._gridRows + 2,
+            0,
+            this._pipelineState.gl.RGBA,
+            this._pipelineState.gl.UNSIGNED_BYTE,
+            null
+        );
+    }
 
 }

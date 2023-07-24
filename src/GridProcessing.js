@@ -24,8 +24,8 @@ export default class GridProcessing {
      * @param x
      * @param y
      */
-    setLife(x, y) {
-        this._nextGrid[x * (this._width + 2) + y] = 1;
+    setLife(x, y, val) {
+        this._nextGrid[x * (this._width + 2) + y] = val;
     }
 
     /**
@@ -42,7 +42,8 @@ export default class GridProcessing {
      *
      */
     update() {
-        this._grid.set(this._nextGrid);
+        this._grid = new Uint8Array(this._nextGrid);
+        //this._nextGrid = temp;
     }
 
     /**
@@ -54,7 +55,7 @@ export default class GridProcessing {
     getNeighborCount(x, y) {
         let count = 0;
 
-        count += this._grid[(x-1) * (this._width + 2) + y];
+        count += this._grid[(x - 1) * (this._width + 2) + y];
         count += this._grid[x * (this._width + 2) + (y-1)];
         count += this._grid[(x - 1) * (this._width + 2) + (y-1)];
         count += this._grid[(x + 1) * (this._width + 2) + (y)];
