@@ -52,11 +52,19 @@ export default class GLRenderer {
 
     /**
      *
+     * @private
+     */
+    _rawTexture;
+
+    /**
+     *
      */
     constructor() {
         this._pipelineState = new GLPipelineState();
         this._glViewPort = new GLViewport(this._pipelineState.canvas);
         this._camera = Mat4.translation(0, 0, 0);
+
+        this._rawTexture = new Uint8Array(this._gridCols * this._gridRows * 4);
 
         this._updateBufferGeometry();
         this._updateTextureSize();
@@ -84,19 +92,34 @@ export default class GLRenderer {
      * @param y
      * @param val
      */
-    setColorToTexture(x, y, val) {
-        const colorData = val === 0
-            ? new Uint8Array([0, 0, 0, 255])
-            : new Uint8Array([0, 255, 0, 255]);
+    setColorToTextureData(x, y, val) {
+        let index = (this._gridCols * y + x) * 4;
 
-        this._pipelineState.gl.texSubImage2D(
-            this._pipelineState.gl.TEXTURE_2D, 0, x,
-            y, 1, 1,
-            this._pipelineState.gl.RGBA, this._pipelineState.gl.UNSIGNED_BYTE,
-            colorData
-        );
+        if (val === 0) {
+            this._rawTexture[index++] = 255;
+            this._rawTexture[index++] = 255;
+            this._rawTexture[index++] = 255;
+            this._rawTexture[index] = 255;
+            return;
+        }
+
+        this._rawTexture[index++] = 0;
+        this._rawTexture[index++] = 255;
+        this._rawTexture[index++] = 0;
+        this._rawTexture[index] = 255;
     }
 
+    /**
+     *
+     */
+    applyTextureData() {
+        this._pipelineState.gl.texSubImage2D(
+            this._pipelineState.gl.TEXTURE_2D, 0, 0,
+            0, this._gridCols, this._gridRows,
+            this._pipelineState.gl.RGBA, this._pipelineState.gl.UNSIGNED_BYTE,
+            this._rawTexture
+        );
+    }
 
     /**
      *
@@ -133,7 +156,6 @@ export default class GLRenderer {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(this._pipelineState.program);
-
 
         gl.uniformMatrix4fv(this._pipelineState.matrixLocation, false, this._camera);
 
