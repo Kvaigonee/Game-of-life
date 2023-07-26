@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "esbuild src/index.js --bundle --outdir=bundle",
     "rebuild": "esbuild src/index.js --bundle --outdir=bundle --watch"
   },
   "repository": {
