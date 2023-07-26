@@ -11,6 +11,10 @@ export default class UserInputHandler extends EventEmitter {
 
     _sizeInput;
 
+    _resetButton;
+
+    _randomButton;
+
     constructor() {
         super();
 
@@ -47,6 +51,7 @@ export default class UserInputHandler extends EventEmitter {
         this._startButton = this._protectedGetElemById("start");
         this._stopButton = this._protectedGetElemById("stop");
         this._resetButton = this._protectedGetElemById("reset");
+        this._randomButton = this._protectedGetElemById("random");
 
         this._startButton.addEventListener("click", () => {
 
@@ -58,10 +63,14 @@ export default class UserInputHandler extends EventEmitter {
             this.dispatchEvent("stop");
         });
 
-
         this._resetButton.addEventListener("click", () => {
 
             this.dispatchEvent("reset");
+        });
+
+        this._randomButton.addEventListener("click", () => {
+
+            this.dispatchEvent("random");
         });
     }
 

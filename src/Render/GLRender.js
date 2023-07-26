@@ -67,12 +67,26 @@ export default class GLRenderer {
 
     /**
      *
+     */
+    get canvas() {
+        return this._pipelineState.canvas;
+    }
+
+    /**
+     *
      * @returns {number}
      */
     get size() {
         return this._gridSize;
     }
 
+    /**
+     *
+     * @param value
+     */
+    set camera(value) {
+        this._camera = value;
+    }
 
     /**
      *
@@ -150,16 +164,16 @@ export default class GLRenderer {
     _updateBufferGeometry() {
         const bufferData = new Float32Array([
             -1, -1,
-            0, 0,
-
-            1, -1,
-            1, 0,
-
-            -1, 1,
             0, 1,
 
+            1, -1,
             1, 1,
-            1, 1
+
+            -1, 1,
+            0, 0,
+
+            1, 1,
+            1, 0
         ]);
 
         const gl = this._pipelineState.gl;

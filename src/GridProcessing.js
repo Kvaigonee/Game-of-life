@@ -2,9 +2,7 @@
 
 export default class GridProcessing {
 
-    _width;
-
-    _height;
+    _size;
 
     _grid;
 
@@ -18,27 +16,26 @@ export default class GridProcessing {
      *
      */
     reset() {
-        this.updateSize(this._width, this._height);
+        this._grid = new Uint8Array((this._size) * (this._size));
+        this._nextGrid = new Uint8Array((this._size) * (this._size));
     }
 
     /**
      *
      */
-    updateSize(w, h) {
-        this._width = w;
-        this._height = h;
-
-        this._grid = new Uint8Array((this._width + 2) * (this._height + 2));
-        this._nextGrid = new Uint8Array((this._width + 2) * (this._height + 2));
+    updateSize(size) {
+        this._size = size;
+        this.reset();
     }
 
     /**
      *
      * @param x
      * @param y
+     * @param val
      */
     setLife(x, y, val) {
-        this._nextGrid[x * (this._width + 2) + y] = val;
+        this._nextGrid[y * (this._size) + x] = val;
     }
 
     /**
@@ -48,7 +45,7 @@ export default class GridProcessing {
      * @returns {*}
      */
     getLife(x, y) {
-        return this._grid[x * (this._width + 2) + y];
+        return this._grid[y * (this._size) + x];
     }
 
     /**
@@ -56,7 +53,6 @@ export default class GridProcessing {
      */
     update() {
         this._grid = new Uint8Array(this._nextGrid);
-        //this._nextGrid = temp;
     }
 
     /**
@@ -68,15 +64,21 @@ export default class GridProcessing {
     getNeighborCount(x, y) {
         let count = 0;
 
-        count += this._grid[(x - 1) * (this._width + 2) + y];
-        count += this._grid[x * (this._width + 2) + (y-1)];
-        count += this._grid[(x - 1) * (this._width + 2) + (y-1)];
-        count += this._grid[(x + 1) * (this._width + 2) + (y)];
+        let bottom = y === 0 ? this._size - 1 : (y - 1);
+        let left = x === 0 ? this._size - 1 : (x - 1);
 
-        count += this._grid[x * (this._width + 2) + (y + 1)];
-        count += this._grid[(x + 1) * (this._width + 2) + (y + 1)];
-        count += this._grid[(x + 1) * (this._width + 2) + (y - 1)];
-        count += this._grid[(x - 1) * (this._width + 2) + (y + 1)];
+        let right = x === this._size - 1 ? 0 : (x + 1);
+        let top = y === this._size - 1 ? 0 : (y + 1);
+
+        count += this._grid[(bottom) * (this._size) + x];
+        count += this._grid[y * (this._size) + (left)];
+        count += this._grid[(bottom) * (this._size) + (left)];
+        count += this._grid[(top) * (this._size) + (x)];
+
+        count += this._grid[y * (this._size) + (right)];
+        count += this._grid[(top) * (this._size) + (right)];
+        count += this._grid[(top) * (this._size) + (left)];
+        count += this._grid[(bottom) * (this._size) + (right)];
 
         return count;
     }

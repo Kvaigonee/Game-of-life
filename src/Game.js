@@ -1,6 +1,7 @@
 import UserInputHandler from "./UserInputHandler";
 import GLRenderer from "./Render/GLRender";
 import GridProcessing from "./GridProcessing";
+import Mat3 from "./Math/Mat3";
 
 /**
  *
@@ -16,11 +17,11 @@ export default class Game {
     _startProcess;
 
     constructor() {
-        this._inputHandler = new UserInputHandler();
-        this._initListeners();
-
         this._render = new GLRenderer();
         this._render.size = 1000;
+
+        this._inputHandler = new UserInputHandler();
+        this._initListeners();
 
         this._gridProcessing = new GridProcessing(this._render.size, this._render.size);
 
@@ -35,8 +36,8 @@ export default class Game {
      * @private
      */
     _randomGeneration() {
-        for (let x = 2; x < this._render.size; x++) {
-            for (let y = 2; y < this._render.size; y++) {
+        for (let x = 0; x < this._render.size; x++) {
+            for (let y = 0; y < this._render.size; y++) {
                 const val = Math.random() < 0.7 ? 0 : 1;
                 this._gridProcessing.setLife(x, y, val);
 
@@ -53,8 +54,8 @@ export default class Game {
      */
     _update() {
         let time = Date.now();
-        for (let x = 2; x < this._render.size; x++) {
-            for (let y = 2; y < this._render.size; y++) {
+        for (let x = 0; x < this._render.size; x++) {
+            for (let y = 0; y < this._render.size; y++) {
                 let m = this._gridProcessing.getNeighborCount(x, y);
                 if (m === 3) {
                     this._gridProcessing.setLife(x, y, 1);
@@ -67,7 +68,6 @@ export default class Game {
                 if (m === 2) {
                     let state = this._gridProcessing.getLife(x, y);
                     this._gridProcessing.setLife(x, y, state);
-                    //this._render.setColorToTextureData(x, y, state);
                     continue;
                 }
 
@@ -81,8 +81,6 @@ export default class Game {
 
         this._render.applyTextureData();
         this._gridProcessing.update();
-
-        //console.log("Last update time: ", Date.now() - time);
     }
 
     /**
@@ -92,7 +90,6 @@ export default class Game {
     _repaint() {
         requestAnimationFrame(() => {
            this._render.draw();
-
            this._repaint();
         });
     }
@@ -106,25 +103,42 @@ export default class Game {
         this._onStop = this._onStop.bind(this);
         this._onReset = this._onReset.bind(this);
         this._onClick = this._onClick.bind(this);
+        this._onRandom = this._onRandom.bind(this);
         this._onSizeChange = this._onSizeChange.bind(this);
 
         this._inputHandler.addEventListener("start", this._onStart);
         this._inputHandler.addEventListener("stop", this._onStop);
         this._inputHandler.addEventListener("reset", this._onReset);
+        this._inputHandler.addEventListener("random", this._onRandom);
+
         this._inputHandler.addEventListener("sizeChange", this._onSizeChange);
 
-        window.addEventListener("click", this._onClick);
+
+        this._render.canvas.addEventListener("click", this._onClick);
     }
 
+    /**
+     *
+     * @private
+     */
     _start() {
         if (this._startProcess !== undefined) return;
 
+        let scale = 1;
         this._startProcess = window.setInterval(() => {
+            scale += 0.01;
+            this._render.camera = Mat3.scaling(scale, scale);
+
             this._update();
         }, 100);
+
         console.log("Start pressed!");
     }
 
+    /**
+     *
+     * @private
+     */
     _stop() {
         if (this._startProcess !== undefined) {
             window.clearInterval(this._startProcess);
@@ -160,11 +174,19 @@ export default class Game {
 
     /**
      *
+     * @private
+     */
+    _onRandom() {
+        this._randomGeneration();
+        this._update();
+    }
+
+    /**
+     *
      * @param event{{value:number}}
      * @private
      */
     _onSizeChange(event) {
-        console.log("WIDTH change")
         this._render.size = event.value;
         this._gridProcessing.updateSize(this._render.size, this._render.size);
 
@@ -176,8 +198,21 @@ export default class Game {
      *
      * @private
      */
-    _onClick() {
-        console.log("CLICK!")
+    _onClick(event) {
+        if (this._startProcess !== undefined) return;
+
+        const sizeCellInPix = this._render.viewPort.width / this._render.size;
+
+        const x = Math.ceil(event.clientX / sizeCellInPix) - 1;
+        const y = Math.ceil(event.clientY / sizeCellInPix) - 1;
+
+        this._gridProcessing.setLife(x, y, 1);
+        this._render.setColorToTextureData(x, y, 1);
+        this._gridProcessing.update();
+
+        console.log("Set to ", x, y)
+
+        this._render.applyTextureData();
     }
 
 }

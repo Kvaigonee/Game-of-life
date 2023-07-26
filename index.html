@@ -4,6 +4,8 @@
     <title>Game of life</title>
     <style>
         .render-view {
+            left: 0;
+            top: 0;
             position: absolute;
             z-index: 1;
         }
@@ -59,6 +61,12 @@
         <label for="size">Size</label>
         <input type="range" min="10" max="5000" class="render-controls-input" id="size">
         <div class="render-controls-view-value" id="size-value"></div>
+    </div>
+
+    <div class="render-controls-block">
+        <label for="scale">Scale</label>
+        <input type="range" min="1" max="4" class="render-controls-input" id="scale">
+        <div class="render-controls-view-value" id="scale-value"></div>
     </div>
 
     <div class="render-controls-block">
