@@ -20,29 +20,23 @@ export default class Game {
         this._initListeners();
 
         this._render = new GLRenderer();
-        this._render.setGridSize(1000, 1000);
-        this._gridProcessing = new GridProcessing(this._render.countCols, this._render.countRows);
+        this._render.size = 1000;
 
-        this._fillGrid();
+        this._gridProcessing = new GridProcessing(this._render.size, this._render.size);
+
+        this._randomGeneration();
         this._update();
+
         this._repaint();
     }
 
-
-    _fillGrid() {
-        let time = Date.now();
-
-        this._randomGeneration();
-
-        this._gridProcessing.update();
-
-        console.log("Fill grid time: ", Date.now() - time);
-    }
-
-
+    /**
+     *
+     * @private
+     */
     _randomGeneration() {
-        for (let x = 2; x < this._render.countCols; x++) {
-            for (let y = 2; y < this._render.countRows; y++) {
+        for (let x = 2; x < this._render.size; x++) {
+            for (let y = 2; y < this._render.size; y++) {
                 const val = Math.random() < 0.7 ? 0 : 1;
                 this._gridProcessing.setLife(x, y, val);
 
@@ -50,12 +44,17 @@ export default class Game {
                 this._render.setColorToTextureData(x, y, val);
             }
         }
+        this._gridProcessing.update();
     }
 
+    /**
+     *
+     * @private
+     */
     _update() {
         let time = Date.now();
-        for (let x = 2; x < this._render.countCols; x++) {
-            for (let y = 2; y < this._render.countRows; y++) {
+        for (let x = 2; x < this._render.size; x++) {
+            for (let y = 2; y < this._render.size; y++) {
                 let m = this._gridProcessing.getNeighborCount(x, y);
                 if (m === 3) {
                     this._gridProcessing.setLife(x, y, 1);
@@ -83,9 +82,13 @@ export default class Game {
         this._render.applyTextureData();
         this._gridProcessing.update();
 
-        console.log("Last update time: ", Date.now() - time);
+        //console.log("Last update time: ", Date.now() - time);
     }
 
+    /**
+     *
+     * @private
+     */
     _repaint() {
         requestAnimationFrame(() => {
            this._render.draw();
@@ -101,19 +104,19 @@ export default class Game {
     _initListeners() {
         this._onStart = this._onStart.bind(this);
         this._onStop = this._onStop.bind(this);
+        this._onReset = this._onReset.bind(this);
         this._onClick = this._onClick.bind(this);
+        this._onSizeChange = this._onSizeChange.bind(this);
 
         this._inputHandler.addEventListener("start", this._onStart);
         this._inputHandler.addEventListener("stop", this._onStop);
+        this._inputHandler.addEventListener("reset", this._onReset);
+        this._inputHandler.addEventListener("sizeChange", this._onSizeChange);
 
         window.addEventListener("click", this._onClick);
     }
 
-    /**
-     *
-     * @private
-     */
-    _onStart() {
+    _start() {
         if (this._startProcess !== undefined) return;
 
         this._startProcess = window.setInterval(() => {
@@ -122,11 +125,7 @@ export default class Game {
         console.log("Start pressed!");
     }
 
-    /**
-     *
-     * @private
-     */
-    _onStop() {
+    _stop() {
         if (this._startProcess !== undefined) {
             window.clearInterval(this._startProcess);
             this._startProcess = undefined;
@@ -137,13 +136,48 @@ export default class Game {
      *
      * @private
      */
+    _onStart() {
+        this._start();
+    }
+
+    /**
+     *
+     * @private
+     */
+    _onStop() {
+        this._stop();
+    }
+
+    /**
+     *
+     * @private
+     */
+    _onReset() {
+        this._render.clearView();
+        this._gridProcessing.reset();
+        this._stop();
+    }
+
+    /**
+     *
+     * @param event{{value:number}}
+     * @private
+     */
+    _onSizeChange(event) {
+        console.log("WIDTH change")
+        this._render.size = event.value;
+        this._gridProcessing.updateSize(this._render.size, this._render.size);
+
+        this._randomGeneration();
+        this._update();
+    }
+
+    /**
+     *
+     * @private
+     */
     _onClick() {
         console.log("CLICK!")
     }
-
-    _onChangeGenerationLifeType() {
-
-    }
-
 
 }

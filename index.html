@@ -31,6 +31,10 @@
             background-color: white;
             color: #4CAF50;
         }
+
+        .render-controls-view-value {
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -52,16 +56,13 @@
     </div>
 
     <div class="render-controls-block">
-        <label for="width">Width</label>
-        <input type="range" class="render-controls-input" id="width">
-
-        <label for="height">Height</label>
-        <input type="range" class="render-controls-input" id="height">
+        <label for="size">Size</label>
+        <input type="range" min="10" max="5000" class="render-controls-input" id="size">
+        <div class="render-controls-view-value" id="size-value"></div>
     </div>
 
     <div class="render-controls-block">
-        <label for="random">Width</label>
-        <input type="checkbox" id="random">
+        <button class="render-controls-button" id="random">Generate random</button>
     </div>
 </div>
 

@@ -1,4 +1,4 @@
-const fragmentShaderSource = `#version 300 es
+const GLFragmentShaderSource = `#version 300 es
 
 precision highp float;
 
@@ -12,4 +12,4 @@ void main() {
   outColor = texture(u_texture, v_texcoord);
 }`;
 
-export default fragmentShaderSource;
+export default GLFragmentShaderSource;

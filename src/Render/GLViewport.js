@@ -11,13 +11,13 @@ export default class GLViewport {
      *
      * @private
      */
-    _DEFAULT_W = 1280;
+    _w = 1280;
 
     /**
      *
      * @private
      */
-    _DEFAULT_H = 1280;
+    _h = 1280;
 
     /**
      *
@@ -30,6 +30,22 @@ export default class GLViewport {
         this._onWindowResize = this._onWindowResize.bind(this);
 
         window.addEventListener("resize", this._onWindowResize);
+    }
+
+    /**
+     *
+     */
+    set width(value) {
+        this._w = value;
+        this._updateSize();
+    }
+
+    /**
+     *
+     */
+    set height(value) {
+        this._h = value;
+        this._updateSize();
     }
 
     /**
@@ -53,8 +69,8 @@ export default class GLViewport {
      * @private
      */
     _updateSize() {
-        this._canvas.width = this._DEFAULT_W;
-        this._canvas.height = this._DEFAULT_H;
+        this._canvas.width = this._w;
+        this._canvas.height = this._h;
     }
 
     /**

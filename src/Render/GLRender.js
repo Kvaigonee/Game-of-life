@@ -21,14 +21,7 @@ export default class GLRenderer {
      * @type {number}
      * @private
      */
-    _gridCols = 500;
-
-    /**
-     *
-     * @type {number}
-     * @private
-     */
-    _gridRows = 500;
+    _gridSize = 500;
 
     /**
      *
@@ -50,10 +43,18 @@ export default class GLRenderer {
         this._glViewPort = new GLViewport(this._pipelineState.canvas);
         this._camera = Mat3.translation(0, 0, 0);
 
-        this._rawTexture = new Uint8Array(this._gridCols * this._gridRows * 4);
+        this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
 
         this._updateBufferGeometry();
         this._updateTextureSize();
+    }
+
+    /**
+     *
+     * @returns {GLViewport}
+     */
+    get viewPort() {
+        return this._glViewPort;
     }
 
     /**
@@ -68,16 +69,8 @@ export default class GLRenderer {
      *
      * @returns {number}
      */
-    get countCols() {
-        return this._gridCols;
-    }
-
-    /**
-     *
-     * @returns {number}
-     */
-    get countRows() {
-        return this._gridRows;
+    get size() {
+        return this._gridSize;
     }
 
 
@@ -88,7 +81,7 @@ export default class GLRenderer {
      * @param val
      */
     setColorToTextureData(x, y, val) {
-        let index = (this._gridCols * y + x) * 4;
+        let index = (this._gridSize * y + x) * 4;
 
         if (val === 0) {
             this._rawTexture[index++] = 255;
@@ -107,10 +100,17 @@ export default class GLRenderer {
     /**
      *
      */
+    clearView() {
+        this._updateTextureSize();
+    }
+
+    /**
+     *
+     */
     applyTextureData() {
         this._pipelineState.gl.texSubImage2D(
             this._pipelineState.gl.TEXTURE_2D, 0, 0,
-            0, this._gridCols, this._gridRows,
+            0, this._gridSize, this._gridSize,
             this._pipelineState.gl.RGBA, this._pipelineState.gl.UNSIGNED_BYTE,
             this._rawTexture
         );
@@ -118,12 +118,9 @@ export default class GLRenderer {
 
     /**
      *
-     * @param w
-     * @param h
      */
-    setGridSize(w, h) {
-        this._gridCols = w;
-        this._gridRows = h;
+    set size(size) {
+        this._gridSize = size;
 
         this._updateBufferGeometry();
         this._updateTextureSize();
@@ -174,13 +171,13 @@ export default class GLRenderer {
      * @private
      */
     _updateTextureSize() {
-        this._rawTexture = new Uint8Array(this._gridCols * this._gridRows * 4);
+        this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
         this._pipelineState.gl.texImage2D(
             this._pipelineState.gl.TEXTURE_2D,
             0,
             this._pipelineState.gl.RGBA,
-            this._gridCols,
-            this._gridRows,
+            this._gridSize,
+            this._gridSize,
             0,
             this._pipelineState.gl.RGBA,
             this._pipelineState.gl.UNSIGNED_BYTE,

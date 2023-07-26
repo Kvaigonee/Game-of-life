@@ -1,7 +1,7 @@
 import GLShader from "./Render/Shader/GLShader";
 import GLShaderProgram from "./Render/Shader/GLShaderProgram";
-import vertexShaderSource from "./Render/Shader/VertexShaderSource";
-import fragmentShaderSource from "./Render/Shader/FragmentShaderSource";
+import vertexShaderSource from "./Render/Shader/GLVertexShaderSource";
+import GLFragmentShaderSource from "./Render/Shader/GLFragmentShaderSource";
 import GLViewport from "./Render/GLViewport";
 import Game from "./Game";
 
@@ -32,7 +32,7 @@ import Game from "./Game";
     }
 
     const vertexShader = GLShader.createVertex(gl, vertexShaderSource);
-    const fragmentShader = GLShader.createFragment(gl, fragmentShaderSource);
+    const fragmentShader = GLShader.createFragment(gl, GLFragmentShaderSource);
 
     const program = GLShaderProgram.create(gl, vertexShader, fragmentShader);
 

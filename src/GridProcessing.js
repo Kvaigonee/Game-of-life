@@ -17,6 +17,13 @@ export default class GridProcessing {
     /**
      *
      */
+    reset() {
+        this.updateSize(this._width, this._height);
+    }
+
+    /**
+     *
+     */
     updateSize(w, h) {
         this._width = w;
         this._height = h;

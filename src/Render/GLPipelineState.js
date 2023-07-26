@@ -1,7 +1,7 @@
 import GLViewport from "./GLViewport";
 import GLShader from "./Shader/GLShader";
-import vertexShaderSource from "./Shader/VertexShaderSource";
-import fragmentShaderSource from "./Shader/FragmentShaderSource";
+import vertexShaderSource from "./Shader/GLVertexShaderSource";
+import GLFragmentShaderSource from "./Shader/GLFragmentShaderSource";
 import GLShaderProgram from "./Shader/GLShaderProgram";
 
 
@@ -62,7 +62,7 @@ export default class GLPipelineState {
         this._buffer = this._createBuffer();
 
         const vertexShader = GLShader.createVertex(this._gl, vertexShaderSource);
-        const fragmentShader = GLShader.createFragment(this._gl, fragmentShaderSource);
+        const fragmentShader = GLShader.createFragment(this._gl, GLFragmentShaderSource);
         this._program = GLShaderProgram.create(this._gl, vertexShader, fragmentShader);
 
         this._applyPointers();
