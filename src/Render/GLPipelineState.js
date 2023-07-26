@@ -1,4 +1,3 @@
-import GLViewport from "./GLViewport";
 import GLShader from "./Shader/GLShader";
 import vertexShaderSource from "./Shader/GLVertexShaderSource";
 import GLFragmentShaderSource from "./Shader/GLFragmentShaderSource";
@@ -47,7 +46,7 @@ export default class GLPipelineState {
      *
      * @private
      */
-    _matrixLocation;
+    //_matrixLocation;
 
 
     constructor() {
@@ -69,7 +68,7 @@ export default class GLPipelineState {
 
         this._gl.clearColor(0.5, 0.5, 0.5, 1);
 
-        this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
+        //this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
     }
 
     get canvas() {
@@ -84,9 +83,9 @@ export default class GLPipelineState {
         return this._program;
     }
 
-    get matrixLocation() {
+/*    get matrixLocation() {
         return this._matrixLocation;
-    }
+    }*/
 
     get buffer() {
         return this._buffer;

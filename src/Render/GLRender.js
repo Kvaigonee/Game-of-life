@@ -1,6 +1,5 @@
 import GLViewport from "./GLViewport";
 import GLPipelineState from "./GLPipelineState";
-import Mat3 from "../Math/Mat3";
 
 
 export default class GLRenderer {
@@ -24,7 +23,7 @@ export default class GLRenderer {
     _gridSize = 500;
 
     /**
-     *
+     * TODO impl scaling and translation
      * @private
      */
     _camera;
@@ -41,7 +40,9 @@ export default class GLRenderer {
     constructor() {
         this._pipelineState = new GLPipelineState();
         this._glViewPort = new GLViewport(this._pipelineState.canvas);
-        this._camera = Mat3.translation(0, 0, 0);
+
+        //this._camera = Mat3.translation(0, 0, 0);
+        //this._pipelineState.gl.uniformMatrix3fv(this._pipelineState.matrixLocation, false, this._camera);
 
         this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
 
@@ -146,13 +147,10 @@ export default class GLRenderer {
     draw() {
         const gl = this._pipelineState.gl;
 
-        gl.viewport(0, 0, this._glViewPort.width, this._glViewPort.height);
-
+        gl.viewport(0, 0, this._glViewPort.size, this._glViewPort.size);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(this._pipelineState.program);
-
-        gl.uniformMatrix3fv(this._pipelineState.matrixLocation, false, this._camera);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }

@@ -11,6 +11,12 @@ export default class UserInputHandler extends EventEmitter {
 
     _sizeInput;
 
+    _sizeValue;
+
+    _speedInput;
+
+    _speedValue;
+
     _resetButton;
 
     _randomButton;
@@ -20,8 +26,21 @@ export default class UserInputHandler extends EventEmitter {
 
         this._initButtons();
         this._initInputs();
+
+        this._lastGenarationTime = this._protectedGetElemById("time");
     }
 
+    get size() {
+        return +this._sizeInput.value;
+    }
+
+    get speed() {
+        return +this._speedValue.value;
+    }
+
+    set generationTime(value) {
+        this._lastGenarationTime.innerText = value;
+    }
 
     /**
      *
@@ -29,16 +48,28 @@ export default class UserInputHandler extends EventEmitter {
      */
     _initInputs() {
         this._sizeInput = this._protectedGetElemById("size");
+        this._speedInput = this._protectedGetElemById("speed");
+
         this._sizeValue = this._protectedGetElemById("size-value");
+        this._speedValue = this._protectedGetElemById("speed-value");
 
         this._sizeValue.textContent = this._sizeInput.value + "X" + this._sizeInput.value;
+        this._speedValue.textContent = this._speedInput.value + " updates in second";
 
         this._sizeInput.addEventListener("input", (event) => {
             this._sizeValue.textContent = event.target.value + "X" + event.target.value;
         });
 
+        this._speedInput.addEventListener("input", (event) => {
+            this._speedValue.textContent = event.target.value + " updates in second";
+        });
+
         this._sizeInput.addEventListener("change", (event) => {
             this.dispatchEvent("sizeChange", {value: +event.target.value});
+        });
+
+        this._speedInput.addEventListener("change", (event) => {
+            this.dispatchEvent("speedChange", {value: +event.target.value});
         });
     }
 

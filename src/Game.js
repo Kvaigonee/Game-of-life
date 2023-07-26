@@ -1,7 +1,6 @@
 import UserInputHandler from "./UserInputHandler";
 import GLRenderer from "./Render/GLRender";
-import GridProcessing from "./GridProcessing";
-import Mat3 from "./Math/Mat3";
+import Grid from "./Grid";
 
 /**
  *
@@ -16,14 +15,18 @@ export default class Game {
 
     _startProcess;
 
+    _updateInSecond;
+
     constructor() {
         this._render = new GLRenderer();
-        this._render.size = 1000;
 
         this._inputHandler = new UserInputHandler();
+        this._render.size = this._inputHandler.size;
+        this._updateInSecond = this._inputHandler.speed;
+
         this._initListeners();
 
-        this._gridProcessing = new GridProcessing(this._render.size, this._render.size);
+        this._gridProcessing = new Grid(this._render.size, this._render.size);
 
         this._randomGeneration();
         this._update();
@@ -81,6 +84,8 @@ export default class Game {
 
         this._render.applyTextureData();
         this._gridProcessing.update();
+
+        this._inputHandler.generationTime = Date.now() - time;
     }
 
     /**
@@ -102,19 +107,32 @@ export default class Game {
         this._onStart = this._onStart.bind(this);
         this._onStop = this._onStop.bind(this);
         this._onReset = this._onReset.bind(this);
-        this._onClick = this._onClick.bind(this);
         this._onRandom = this._onRandom.bind(this);
         this._onSizeChange = this._onSizeChange.bind(this);
+        this._onSpeedChange = this._onSpeedChange.bind(this);
 
         this._inputHandler.addEventListener("start", this._onStart);
         this._inputHandler.addEventListener("stop", this._onStop);
         this._inputHandler.addEventListener("reset", this._onReset);
         this._inputHandler.addEventListener("random", this._onRandom);
-
         this._inputHandler.addEventListener("sizeChange", this._onSizeChange);
+        this._inputHandler.addEventListener("speedChange", this._onSpeedChange);
 
+        let wasDown = false;
 
-        this._render.canvas.addEventListener("click", this._onClick);
+        this._render.canvas.addEventListener("mousedown", () => {
+            wasDown = true;
+        });
+
+        this._render.canvas.addEventListener("mouseup", () => {
+            wasDown = false;
+        });
+
+        this._render.canvas.addEventListener("mousemove", (event) => {
+            if (wasDown) {
+                this._applyEventCoordinates(event);
+            }
+        });
     }
 
     /**
@@ -124,15 +142,9 @@ export default class Game {
     _start() {
         if (this._startProcess !== undefined) return;
 
-        let scale = 1;
         this._startProcess = window.setInterval(() => {
-            scale += 0.01;
-            this._render.camera = Mat3.scaling(scale, scale);
-
             this._update();
-        }, 100);
-
-        console.log("Start pressed!");
+        }, 1000 / this._updateInSecond);
     }
 
     /**
@@ -196,12 +208,23 @@ export default class Game {
 
     /**
      *
+     * @param event
      * @private
      */
-    _onClick(event) {
+    _onSpeedChange(event) {
+        this._stop();
+        this._updateInSecond = event.value;
+        this._start();
+    }
+
+    /**
+     *
+     * @private
+     */
+    _applyEventCoordinates(event) {
         if (this._startProcess !== undefined) return;
 
-        const sizeCellInPix = this._render.viewPort.width / this._render.size;
+        const sizeCellInPix = this._render.viewPort.size / this._render.size;
 
         const x = Math.ceil(event.clientX / sizeCellInPix) - 1;
         const y = Math.ceil(event.clientY / sizeCellInPix) - 1;
@@ -209,8 +232,6 @@ export default class Game {
         this._gridProcessing.setLife(x, y, 1);
         this._render.setColorToTextureData(x, y, 1);
         this._gridProcessing.update();
-
-        console.log("Set to ", x, y)
 
         this._render.applyTextureData();
     }

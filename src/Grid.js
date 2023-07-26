@@ -1,6 +1,6 @@
 
 
-export default class GridProcessing {
+export default class Grid {
 
     _size;
 
