@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Game of life</title>
+    <style>
+        .render-view {
+            left: 0;
+            top: 0;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .render-controls {
+            position: absolute;
+            z-index: 2;
+            top: 10px;
+            right: 10px;
+        }
+
+        .render-controls-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition-duration: 0.4s;
+        }
+
+        .render-controls-button:hover {
+            background-color: white;
+            color: #4CAF50;
+        }
+
+        .render-controls-view-value {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="render-view">
+    <canvas id="render-area"></canvas>
+</div>
+
+<div class="render-controls">
+    <div class="render-controls-block">
+        <button class="render-controls-button" id="start">Start</button>
+        <button class="render-controls-button" id="stop">Stop</button>
+        <button class="render-controls-button" id="reset">Reset</button>
+    </div>
+
+    <div class="render-controls-block">
+        <label for="time">Generation time</label>
+        <div class="render-controls-view-value" id="time"></div>
+    </div>
+
+    <div class="render-controls-block">
+        <label for="size">Size</label>
+        <input type="range" min="10" max="5000" class="render-controls-input" id="size">
+        <div class="render-controls-view-value" id="size-value"></div>
+    </div>
+
+    <div class="render-controls-block">
+        <label for="speed">Speed</label>
+        <input type="range" min="1" max="60" class="render-controls-input" id="speed">
+        <div class="render-controls-view-value" id="speed-value"></div>
+    </div>
+
+    <div class="render-controls-block">
+        <button class="render-controls-button" id="random">Generate random</button>
+    </div>
+</div>
+
+<script>
+    (() => {
+        // src/EventSystem/EventEmmiter.js
+        var EventEmitter = class extends EventTarget {
+            /**
+             *
+             */
+            #eventListenerList;
+            /**
+             *
+             */
+            constructor() {
+                super();
+                this.#eventListenerList = /* @__PURE__ */ new Map();
+                this.onEvent = this.onEvent.bind(this);
+            }
+            /**
+             *
+             */
+            addEventListener(key, listener) {
+                this.#eventListenerList.set(key, listener);
+                super.addEventListener(key.toString(), this.onEvent);
+            }
+            /**
+             *
+             * @param key
+             * @param data
+             */
+            dispatchEvent(key, data) {
+                super.dispatchEvent(new CustomEvent(key.toString(), {
+                    detail: data
+                }));
+            }
+            /**
+             *
+             * @param key
+             */
+            removeEventListener(key) {
+                this.#eventListenerList.delete(key);
+                super.removeEventListener(key.toString(), this.onEvent);
+            }
+            /**
+             *
+             */
+            onEvent(evt) {
+                const callBack = this.#eventListenerList.get(evt.type);
+                if (!callBack)
+                    return;
+                callBack(evt.detail);
+            }
+        };
+
+        // src/UserInputHandler.js
+        var UserInputHandler = class extends EventEmitter {
+            _startButton;
+            _stopButton;
+            _sizeInput;
+            _sizeValue;
+            _speedInput;
+            _speedValue;
+            _resetButton;
+            _randomButton;
+            constructor() {
+                super();
+                this._initButtons();
+                this._initInputs();
+                this._lastGenarationTime = this._protectedGetElemById("time");
+            }
+            get size() {
+                return +this._sizeInput.value;
+            }
+            get speed() {
+                return +this._speedValue.value;
+            }
+            set generationTime(value) {
+                this._lastGenarationTime.innerText = value;
+            }
+            /**
+             *
+             * @private
+             */
+            _initInputs() {
+                this._sizeInput = this._protectedGetElemById("size");
+                this._speedInput = this._protectedGetElemById("speed");
+                this._sizeValue = this._protectedGetElemById("size-value");
+                this._speedValue = this._protectedGetElemById("speed-value");
+                this._sizeValue.textContent = this._sizeInput.value + "X" + this._sizeInput.value;
+                this._speedValue.textContent = this._speedInput.value + " updates in second";
+                this._sizeInput.addEventListener("input", (event) => {
+                    this._sizeValue.textContent = event.target.value + "X" + event.target.value;
+                });
+                this._speedInput.addEventListener("input", (event) => {
+                    this._speedValue.textContent = event.target.value + " updates in second";
+                });
+                this._sizeInput.addEventListener("change", (event) => {
+                    this.dispatchEvent("sizeChange", { value: +event.target.value });
+                });
+                this._speedInput.addEventListener("change", (event) => {
+                    this.dispatchEvent("speedChange", { value: +event.target.value });
+                });
+            }
+            /**
+             *
+             * @private
+             */
+            _initButtons() {
+                this._startButton = this._protectedGetElemById("start");
+                this._stopButton = this._protectedGetElemById("stop");
+                this._resetButton = this._protectedGetElemById("reset");
+                this._randomButton = this._protectedGetElemById("random");
+                this._startButton.addEventListener("click", () => {
+                    this.dispatchEvent("start");
+                });
+                this._stopButton.addEventListener("click", () => {
+                    this.dispatchEvent("stop");
+                });
+                this._resetButton.addEventListener("click", () => {
+                    this.dispatchEvent("reset");
+                });
+                this._randomButton.addEventListener("click", () => {
+                    this.dispatchEvent("random");
+                });
+            }
+            /**
+             *
+             * @param id
+             * @returns {HTMLElement}
+             * @private
+             */
+            _protectedGetElemById(id) {
+                const elem = document.getElementById(id);
+                if (!elem)
+                    throw new Error(`Get element by id: ${id} error!`);
+                return elem;
+            }
+        };
+
+        // src/Render/GLViewport.js
+        var GLViewport = class {
+            /**
+             *
+             * @private
+             */
+            _canvas;
+            /**
+             *
+             * @private
+             */
+            _size = 1280;
+            /**
+             *
+             * @param canvas
+             */
+            constructor(canvas) {
+                this._canvas = canvas;
+                this._updateSize();
+                this._onWindowResize = this._onWindowResize.bind(this);
+                window.addEventListener("resize", this._onWindowResize);
+            }
+            /**
+             *
+             * @returns {*}
+             */
+            get size() {
+                return this._size;
+            }
+            /**
+             *
+             * @private
+             */
+            _updateSize() {
+                this._canvas.width = this._size;
+                this._canvas.height = this._size;
+            }
+            /**
+             *
+             */
+            _onWindowResize() {
+                this._updateSize();
+            }
+        };
+
+        // src/Render/Shader/GLShader.js
+        var GLShader = class _GLShader {
+            /**
+             *
+             */
+            _webGLShader;
+            /**
+             *
+             */
+            _type;
+            /**
+             *
+             * @param renderingContext
+             * @param shaderType
+             * @param sourceCode
+             */
+            constructor(renderingContext, shaderType, sourceCode) {
+                const glContext = renderingContext;
+                const shader = glContext.createShader(shaderType);
+                if (shader === null) {
+                    throw new Error("Unable to create shader with type " + shaderType);
+                }
+                glContext.shaderSource(shader, sourceCode);
+                glContext.compileShader(shader);
+                if (!glContext.getShaderParameter(shader, glContext.COMPILE_STATUS)) {
+                    throw new Error(
+                        "An error occurred compiling the shaders: " + glContext.getShaderInfoLog(shader) + glContext.getShaderInfoLog(shader)
+                    );
+                }
+                this._webGLShader = shader;
+                this._type = shaderType;
+            }
+            /**
+             *
+             */
+            get webGLShader() {
+                return this._webGLShader;
+            }
+            /**
+             *
+             */
+            get type() {
+                return this._type;
+            }
+            /**
+             *
+             * @param ctx
+             * @param shaderSource
+             * @returns {GLShader}
+             */
+            static createVertex(ctx, shaderSource) {
+                return _GLShader.create(ctx, ctx.VERTEX_SHADER, shaderSource);
+            }
+            /**
+             *
+             * @param ctx
+             * @param shaderSource
+             * @returns {GLShader}
+             */
+            static createFragment(ctx, shaderSource) {
+                return _GLShader.create(ctx, ctx.FRAGMENT_SHADER, shaderSource);
+            }
+            /**
+             *
+             * @param ctx
+             * @param shaderType
+             * @param shaderSource
+             * @returns {GLShader}
+             */
+            static create(ctx, shaderType, shaderSource) {
+                return new _GLShader(ctx, shaderType, shaderSource);
+            }
+        };
+
+        // src/Render/Shader/GLVertexShaderSource.js
+        var vertexSource = `#version 300 es
+
+in vec2 a_position;
+in vec2 a_texcoord;
+
+//uniform mat3 u_matrix;
+
+out vec2 v_texcoord;
+
+void main() {
+    //vec3 position = (u_matrix * vec3(a_position, 1));
+
+    gl_Position = vec4(a_position, 0, 1);
+
+    v_texcoord = a_texcoord;
+}`;
+        var GLVertexShaderSource_default = vertexSource;
+
+        // src/Render/Shader/GLFragmentShaderSource.js
+        var GLFragmentShaderSource = `#version 300 es
+
+precision highp float;
+
+in vec2 v_texcoord;
+
+uniform sampler2D u_texture;
+
+out vec4 outColor;
+
+void main() {
+  outColor = texture(u_texture, v_texcoord);
+}`;
+        var GLFragmentShaderSource_default = GLFragmentShaderSource;
+
+        // src/Render/Shader/GLShaderProgram.js
+        var GLShaderProgram = class {
+            /**
+             *
+             * @param gl
+             * @param vertexShader
+             * @param fragmentShader
+             * @returns {WebGLProgram}
+             */
+            static create(gl, vertexShader, fragmentShader) {
+                const program = gl.createProgram();
+                if (program === null)
+                    throw new Error("Create program error!");
+                gl.attachShader(program, vertexShader.webGLShader);
+                gl.attachShader(program, fragmentShader.webGLShader);
+                gl.linkProgram(program);
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    throw new Error("Link program error!");
+                }
+                return program;
+            }
+        };
+
+        // src/Render/GLPipelineState.js
+        var GLPipelineState = class {
+            /**
+             *
+             * @private
+             */
+            _canvas;
+            /**
+             *
+             * @private
+             */
+            _gl;
+            /**
+             *
+             * @private
+             */
+            _program;
+            /**
+             *
+             * @private
+             */
+            _texture;
+            /**
+             *
+             * @private
+             */
+            _nextTexture;
+            /**
+             *
+             * @private
+             */
+            _buffer;
+            /**
+             *
+             * @private
+             */
+            //_matrixLocation;
+            constructor() {
+                this._canvas = this._createCanvas();
+                this._gl = this._createContext();
+                this._texture = this._gl.createTexture();
+                this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+                this._setTextureParams();
+                this._nextTexture = this._gl.createTexture();
+                this._buffer = this._createBuffer();
+                const vertexShader = GLShader.createVertex(this._gl, GLVertexShaderSource_default);
+                const fragmentShader = GLShader.createFragment(this._gl, GLFragmentShaderSource_default);
+                this._program = GLShaderProgram.create(this._gl, vertexShader, fragmentShader);
+                this._applyPointers();
+                this._gl.clearColor(0.5, 0.5, 0.5, 1);
+            }
+            get canvas() {
+                return this._canvas;
+            }
+            get gl() {
+                return this._gl;
+            }
+            get program() {
+                return this._program;
+            }
+            /*    get matrixLocation() {
+                    return this._matrixLocation;
+                }*/
+            get buffer() {
+                return this._buffer;
+            }
+            get texture() {
+                return this._texture;
+            }
+            get nextTexture() {
+                return this._nextTexture;
+            }
+            /**
+             *
+             * @returns {HTMLElement}
+             * @private
+             */
+            _createCanvas() {
+                let canvas = document.getElementById("render-area");
+                if (!canvas) {
+                    canvas = document.createElement("canvas");
+                    document.body.appendChild(canvas);
+                }
+                return canvas;
+            }
+            /**
+             *
+             * @returns {*}
+             * @private
+             */
+            _createContext() {
+                if (!this._canvas) {
+                    throw new Error("Get context before init canvas!");
+                }
+                const gl = this._canvas.getContext("webgl2");
+                if (!gl) {
+                    throw new Error("Get context error!");
+                }
+                return gl;
+            }
+            /**
+             *
+             * @private
+             */
+            _setTextureParams() {
+                this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
+                this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
+                this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, this._gl.CLAMP_TO_EDGE);
+                this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, this._gl.CLAMP_TO_EDGE);
+            }
+            /**
+             *
+             * @returns {WebGLBuffer | AudioBuffer}
+             * @private
+             */
+            _createBuffer() {
+                const buffer = this._gl.createBuffer();
+                if (buffer === null)
+                    throw new Error("Buffer was not created!");
+                return buffer;
+            }
+            /**
+             *
+             * @private
+             */
+            _applyPointers() {
+                this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._buffer);
+                let attribPosition = this._gl.getAttribLocation(this._program, "a_position");
+                this._gl.enableVertexAttribArray(attribPosition);
+                this._gl.vertexAttribPointer(
+                    attribPosition,
+                    2,
+                    this._gl.FLOAT,
+                    false,
+                    16,
+                    0
+                );
+                let uvAttribPosition = this._gl.getAttribLocation(this._program, "a_texcoord");
+                this._gl.enableVertexAttribArray(uvAttribPosition);
+                this._gl.vertexAttribPointer(
+                    uvAttribPosition,
+                    2,
+                    this._gl.FLOAT,
+                    false,
+                    16,
+                    8
+                );
+            }
+        };
+
+        // src/Render/GLRender.js
+        var GLRenderer = class {
+            /**
+             * @type {GLViewport}
+             * @private
+             */
+            _glViewPort;
+            /**
+             *
+             * @private
+             */
+            _pipelineState;
+            /**
+             *
+             * @type {number}
+             * @private
+             */
+            _gridSize = 500;
+            /**
+             * TODO impl scaling and translation
+             * @private
+             */
+            _camera;
+            /**
+             *
+             * @private
+             */
+            _rawTexture;
+            /**
+             *
+             */
+            constructor() {
+                this._pipelineState = new GLPipelineState();
+                this._glViewPort = new GLViewport(this._pipelineState.canvas);
+                this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
+                this._updateBufferGeometry();
+                this._updateTextureSize();
+            }
+            /**
+             *
+             * @returns {GLViewport}
+             */
+            get viewPort() {
+                return this._glViewPort;
+            }
+            /**
+             *
+             * @returns {*}
+             */
+            get camera() {
+                return this._camera;
+            }
+            /**
+             *
+             */
+            get canvas() {
+                return this._pipelineState.canvas;
+            }
+            /**
+             *
+             * @returns {number}
+             */
+            get size() {
+                return this._gridSize;
+            }
+            /**
+             *
+             * @param value
+             */
+            set camera(value) {
+                this._camera = value;
+            }
+            /**
+             *
+             * @param x
+             * @param y
+             * @param val
+             */
+            setColorToTextureData(x, y, val) {
+                let index = (this._gridSize * y + x) * 4;
+                if (val === 0) {
+                    this._rawTexture[index++] = 255;
+                    this._rawTexture[index++] = 255;
+                    this._rawTexture[index++] = 255;
+                    this._rawTexture[index] = 255;
+                    return;
+                }
+                this._rawTexture[index++] = 0;
+                this._rawTexture[index++] = 255;
+                this._rawTexture[index++] = 0;
+                this._rawTexture[index] = 255;
+            }
+            /**
+             *
+             */
+            clearView() {
+                this._updateTextureSize();
+            }
+            /**
+             *
+             */
+            applyTextureData() {
+                this._pipelineState.gl.texSubImage2D(
+                    this._pipelineState.gl.TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    this._gridSize,
+                    this._gridSize,
+                    this._pipelineState.gl.RGBA,
+                    this._pipelineState.gl.UNSIGNED_BYTE,
+                    this._rawTexture
+                );
+            }
+            /**
+             *
+             */
+            set size(size) {
+                this._gridSize = size;
+                this._updateBufferGeometry();
+                this._updateTextureSize();
+            }
+            /**
+             *
+             */
+            draw() {
+                const gl = this._pipelineState.gl;
+                gl.viewport(0, 0, this._glViewPort.size, this._glViewPort.size);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(this._pipelineState.program);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+            /**
+             *
+             * @private
+             */
+            _updateBufferGeometry() {
+                const bufferData = new Float32Array([
+                    -1,
+                    -1,
+                    0,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0
+                ]);
+                const gl = this._pipelineState.gl;
+                gl.bufferData(gl.ARRAY_BUFFER, bufferData, gl.STATIC_DRAW);
+            }
+            /**
+             *
+             * @private
+             */
+            _updateTextureSize() {
+                this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
+                this._pipelineState.gl.texImage2D(
+                    this._pipelineState.gl.TEXTURE_2D,
+                    0,
+                    this._pipelineState.gl.RGBA,
+                    this._gridSize,
+                    this._gridSize,
+                    0,
+                    this._pipelineState.gl.RGBA,
+                    this._pipelineState.gl.UNSIGNED_BYTE,
+                    null
+                );
+            }
+        };
+
+        // src/Grid.js
+        var Grid = class {
+            _size;
+            _grid;
+            _nextGrid;
+            constructor(w, h) {
+                this.updateSize(w, h);
+            }
+            /**
+             *
+             */
+            reset() {
+                this._grid = new Uint8Array(this._size * this._size);
+                this._nextGrid = new Uint8Array(this._size * this._size);
+            }
+            /**
+             *
+             */
+            updateSize(size) {
+                this._size = size;
+                this.reset();
+            }
+            /**
+             *
+             * @param x
+             * @param y
+             * @param val
+             */
+            setLife(x, y, val) {
+                this._nextGrid[y * this._size + x] = val;
+            }
+            /**
+             *
+             * @param x
+             * @param y
+             * @returns {*}
+             */
+            getLife(x, y) {
+                return this._grid[y * this._size + x];
+            }
+            /**
+             *
+             */
+            update() {
+                this._grid = new Uint8Array(this._nextGrid);
+            }
+            /**
+             *
+             * @param x
+             * @param y
+             * @returns {number}
+             */
+            getNeighborCount(x, y) {
+                let count = 0;
+                let bottom = y === 0 ? this._size - 1 : y - 1;
+                let left = x === 0 ? this._size - 1 : x - 1;
+                let right = x === this._size - 1 ? 0 : x + 1;
+                let top = y === this._size - 1 ? 0 : y + 1;
+                count += this._grid[bottom * this._size + x];
+                count += this._grid[y * this._size + left];
+                count += this._grid[bottom * this._size + left];
+                count += this._grid[top * this._size + x];
+                count += this._grid[y * this._size + right];
+                count += this._grid[top * this._size + right];
+                count += this._grid[top * this._size + left];
+                count += this._grid[bottom * this._size + right];
+                return count;
+            }
+        };
+
+        // src/Game.js
+        var Game = class {
+            _inputHandler;
+            _render;
+            _gridProcessing;
+            _startProcess;
+            _updateInSecond;
+            constructor() {
+                this._render = new GLRenderer();
+                this._inputHandler = new UserInputHandler();
+                this._render.size = this._inputHandler.size;
+                this._updateInSecond = this._inputHandler.speed;
+                this._initListeners();
+                this._gridProcessing = new Grid(this._render.size, this._render.size);
+                this._randomGeneration();
+                this._update();
+                this._repaint();
+            }
+            /**
+             *
+             * @private
+             */
+            _randomGeneration() {
+                for (let x = 0; x < this._render.size; x++) {
+                    for (let y = 0; y < this._render.size; y++) {
+                        const val = Math.random() < 0.7 ? 0 : 1;
+                        this._gridProcessing.setLife(x, y, val);
+                        if (val === 0)
+                            continue;
+                        this._render.setColorToTextureData(x, y, val);
+                    }
+                }
+                this._gridProcessing.update();
+            }
+            /**
+             *
+             * @private
+             */
+            _update() {
+                let time = Date.now();
+                for (let x = 0; x < this._render.size; x++) {
+                    for (let y = 0; y < this._render.size; y++) {
+                        let m = this._gridProcessing.getNeighborCount(x, y);
+                        if (m === 3) {
+                            this._gridProcessing.setLife(x, y, 1);
+                            if (this._gridProcessing.getLife(x, y) !== 1) {
+                                this._render.setColorToTextureData(x, y, 1);
+                            }
+                            continue;
+                        }
+                        if (m === 2) {
+                            let state = this._gridProcessing.getLife(x, y);
+                            this._gridProcessing.setLife(x, y, state);
+                            continue;
+                        }
+                        this._gridProcessing.setLife(x, y, 0);
+                        if (this._gridProcessing.getLife(x, y) !== 0) {
+                            this._render.setColorToTextureData(x, y, 0);
+                        }
+                    }
+                }
+                this._render.applyTextureData();
+                this._gridProcessing.update();
+                this._inputHandler.generationTime = Date.now() - time;
+            }
+            /**
+             *
+             * @private
+             */
+            _repaint() {
+                requestAnimationFrame(() => {
+                    this._render.draw();
+                    this._repaint();
+                });
+            }
+            /**
+             *
+             * @private
+             */
+            _initListeners() {
+                this._onStart = this._onStart.bind(this);
+                this._onStop = this._onStop.bind(this);
+                this._onReset = this._onReset.bind(this);
+                this._onRandom = this._onRandom.bind(this);
+                this._onSizeChange = this._onSizeChange.bind(this);
+                this._onSpeedChange = this._onSpeedChange.bind(this);
+                this._inputHandler.addEventListener("start", this._onStart);
+                this._inputHandler.addEventListener("stop", this._onStop);
+                this._inputHandler.addEventListener("reset", this._onReset);
+                this._inputHandler.addEventListener("random", this._onRandom);
+                this._inputHandler.addEventListener("sizeChange", this._onSizeChange);
+                this._inputHandler.addEventListener("speedChange", this._onSpeedChange);
+                let wasDown = false;
+                this._render.canvas.addEventListener("mousedown", () => {
+                    wasDown = true;
+                });
+                this._render.canvas.addEventListener("mouseup", () => {
+                    wasDown = false;
+                });
+                this._render.canvas.addEventListener("mousemove", (event) => {
+                    if (wasDown) {
+                        this._applyEventCoordinates(event);
+                    }
+                });
+            }
+            /**
+             *
+             * @private
+             */
+            _start() {
+                if (this._startProcess !== void 0)
+                    return;
+                this._startProcess = window.setInterval(() => {
+                    this._update();
+                }, 1e3 / this._updateInSecond);
+            }
+            /**
+             *
+             * @private
+             */
+            _stop() {
+                if (this._startProcess !== void 0) {
+                    window.clearInterval(this._startProcess);
+                    this._startProcess = void 0;
+                }
+            }
+            /**
+             *
+             * @private
+             */
+            _onStart() {
+                this._start();
+            }
+            /**
+             *
+             * @private
+             */
+            _onStop() {
+                this._stop();
+            }
+            /**
+             *
+             * @private
+             */
+            _onReset() {
+                this._render.clearView();
+                this._gridProcessing.reset();
+                this._stop();
+            }
+            /**
+             *
+             * @private
+             */
+            _onRandom() {
+                this._randomGeneration();
+                this._update();
+            }
+            /**
+             *
+             * @param event{{value:number}}
+             * @private
+             */
+            _onSizeChange(event) {
+                this._render.size = event.value;
+                this._gridProcessing.updateSize(this._render.size, this._render.size);
+                this._randomGeneration();
+                this._update();
+            }
+            /**
+             *
+             * @param event
+             * @private
+             */
+            _onSpeedChange(event) {
+                this._stop();
+                this._updateInSecond = event.value;
+                this._start();
+            }
+            /**
+             *
+             * @private
+             */
+            _applyEventCoordinates(event) {
+                if (this._startProcess !== void 0)
+                    return;
+                const sizeCellInPix = this._render.viewPort.size / this._render.size;
+                const x = Math.ceil(event.clientX / sizeCellInPix) - 1;
+                const y = Math.ceil(event.clientY / sizeCellInPix) - 1;
+                this._gridProcessing.setLife(x, y, 1);
+                this._render.setColorToTextureData(x, y, 1);
+                this._gridProcessing.update();
+                this._render.applyTextureData();
+            }
+        };
+
+        // src/index.js
+        (() => {
+            new Game();
+        })();
+    })();
+</script>
+</body>
+</html>
