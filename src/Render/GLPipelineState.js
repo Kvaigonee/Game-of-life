@@ -69,7 +69,6 @@ export default class GLPipelineState {
 
         this._gl.clearColor(0.5, 0.5, 0.5, 1);
 
-
         this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
     }
 
@@ -171,13 +170,13 @@ export default class GLPipelineState {
         this._gl.enableVertexAttribArray(attribPosition);
 
         this._gl.vertexAttribPointer(
-            attribPosition, 3, this._gl.FLOAT, false, 20, 0);
+            attribPosition, 2, this._gl.FLOAT, false, 16, 0);
 
 
         let uvAttribPosition = this._gl.getAttribLocation(this._program, "a_texcoord");
         this._gl.enableVertexAttribArray(uvAttribPosition);
 
         this._gl.vertexAttribPointer(
-            uvAttribPosition, 2, this._gl.FLOAT, false, 20, 12);
+            uvAttribPosition, 2, this._gl.FLOAT, false, 16, 8);
     }
 }

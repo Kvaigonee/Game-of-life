@@ -11,7 +11,13 @@ export default class GridProcessing {
     _nextGrid;
 
     constructor(w, h) {
+        this.updateSize(w, h);
+    }
 
+    /**
+     *
+     */
+    updateSize(w, h) {
         this._width = w;
         this._height = h;
 

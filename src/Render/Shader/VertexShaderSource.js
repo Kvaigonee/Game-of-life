@@ -1,16 +1,18 @@
 const vertexSource = `#version 300 es
 
-in vec4 a_position;
+in vec2 a_position;
 in vec2 a_texcoord;
 
-uniform mat4 u_matrix;
+uniform mat3 u_matrix;
 
 out vec2 v_texcoord;
 
 void main() {
-  gl_Position = u_matrix * a_position;
+    vec3 position = (u_matrix * vec3(a_position, 1));
 
-  v_texcoord = a_texcoord;
+    gl_Position = vec4(position, 1);
+    
+    v_texcoord = a_texcoord;
 }`;
 
 export default vertexSource;

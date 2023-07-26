@@ -2,7 +2,6 @@ import GLShader from "./Render/Shader/GLShader";
 import GLShaderProgram from "./Render/Shader/GLShaderProgram";
 import vertexShaderSource from "./Render/Shader/VertexShaderSource";
 import fragmentShaderSource from "./Render/Shader/FragmentShaderSource";
-import Mat4 from "./Math/Mat4";
 import GLViewport from "./Render/GLViewport";
 import Game from "./Game";
 

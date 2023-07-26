@@ -1,34 +1,68 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Game of life</title>
-
     <style>
-        #render {
+        .render-view {
             position: absolute;
             z-index: 1;
         }
 
-        #controls {
+        .render-controls {
             position: absolute;
             z-index: 2;
+            top: 10px;
+            right: 10px;
+        }
+
+        .render-controls-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition-duration: 0.4s;
+        }
+
+        .render-controls-button:hover {
+            background-color: white;
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
 
-<div id="render">
+<div class="render-view">
     <canvas id="render-area"></canvas>
 </div>
 
-<div id="controls">
+<div class="render-controls">
+    <div class="render-controls-block">
+        <button class="render-controls-button" id="start">Start</button>
+        <button class="render-controls-button" id="stop">Stop</button>
+        <button class="render-controls-button" id="reset">Reset</button>
+    </div>
 
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
+    <div class="render-controls-block">
+        <label for="time">Generation time</label>
+        <div class="render-controls-text" id="time"></div>
+    </div>
+
+    <div class="render-controls-block">
+        <label for="width">Width</label>
+        <input type="range" class="render-controls-input" id="width">
+
+        <label for="height">Height</label>
+        <input type="range" class="render-controls-input" id="height">
+    </div>
+
+    <div class="render-controls-block">
+        <label for="random">Width</label>
+        <input type="checkbox" id="random">
+    </div>
 </div>
 
 <script src="bundle/index.js"></script>

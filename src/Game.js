@@ -13,22 +13,19 @@ export default class Game {
 
     _gridProcessing;
 
+    _startProcess;
+
     constructor() {
         this._inputHandler = new UserInputHandler();
+        this._initListeners();
 
         this._render = new GLRenderer();
-
-        this._inputHandler.addEventListener("start", this._onStart);
+        this._render.setGridSize(1000, 1000);
         this._gridProcessing = new GridProcessing(this._render.countCols, this._render.countRows);
 
         this._fillGrid();
+        this._update();
         this._repaint();
-
-        this._render.setSize(1000, 1000);
-
-        setInterval(() => {
-            this._update();
-        }, 100);
     }
 
 
@@ -57,8 +54,8 @@ export default class Game {
 
     _update() {
         let time = Date.now();
-        for (let x = 2; x <= this._render.countCols; x++) {
-            for (let y = 2; y <= this._render.countRows; y++) {
+        for (let x = 2; x < this._render.countCols; x++) {
+            for (let y = 2; y < this._render.countRows; y++) {
                 let m = this._gridProcessing.getNeighborCount(x, y);
                 if (m === 3) {
                     this._gridProcessing.setLife(x, y, 1);
@@ -97,12 +94,51 @@ export default class Game {
         });
     }
 
+    /**
+     *
+     * @private
+     */
+    _initListeners() {
+        this._onStart = this._onStart.bind(this);
+        this._onStop = this._onStop.bind(this);
+        this._onClick = this._onClick.bind(this);
+
+        this._inputHandler.addEventListener("start", this._onStart);
+        this._inputHandler.addEventListener("stop", this._onStop);
+
+        window.addEventListener("click", this._onClick);
+    }
+
+    /**
+     *
+     * @private
+     */
     _onStart() {
+        if (this._startProcess !== undefined) return;
+
+        this._startProcess = window.setInterval(() => {
+            this._update();
+        }, 100);
         console.log("Start pressed!");
     }
 
+    /**
+     *
+     * @private
+     */
     _onStop() {
+        if (this._startProcess !== undefined) {
+            window.clearInterval(this._startProcess);
+            this._startProcess = undefined;
+        }
+    }
 
+    /**
+     *
+     * @private
+     */
+    _onClick() {
+        console.log("CLICK!")
     }
 
     _onChangeGenerationLifeType() {
