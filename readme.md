@@ -1,6 +1,8 @@
-
+##For build:
 1. npm i
 2. npm run build
+
+In build folder actual develop result
 
 Using the control menu, you can start, pause, reset the result
 Also set grid sizes, update rate
