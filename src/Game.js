@@ -26,7 +26,7 @@ export default class Game {
 
         this._initListeners();
 
-        this._gridProcessing = new Grid(this._render.size, this._render.size);
+        this._gridProcessing = new Grid(this._render.size);
 
         this._randomGeneration();
         this._update();
@@ -43,9 +43,6 @@ export default class Game {
             for (let y = 0; y < this._render.size; y++) {
                 const val = Math.random() < 0.7 ? 0 : 1;
                 this._gridProcessing.setLife(x, y, val);
-
-                if (val === 0) continue;
-                this._render.setColorToTextureData(x, y, val);
             }
         }
         this._gridProcessing.update();
@@ -62,10 +59,6 @@ export default class Game {
                 let m = this._gridProcessing.getNeighborCount(x, y);
                 if (m === 3) {
                     this._gridProcessing.setLife(x, y, 1);
-
-                    if (this._gridProcessing.getLife(x, y) !== 1) {
-                        this._render.setColorToTextureData(x, y, 1);
-                    }
                     continue;
                 }
                 if (m === 2) {
@@ -75,15 +68,11 @@ export default class Game {
                 }
 
                 this._gridProcessing.setLife(x, y, 0);
-
-                if (this._gridProcessing.getLife(x, y) !== 0) {
-                    this._render.setColorToTextureData(x, y, 0);
-                }
             }
         }
 
-        this._render.applyTextureData();
         this._gridProcessing.update();
+        this._render.textureSubData(this._gridProcessing.grid);
 
         this._inputHandler.generationTime = Date.now() - time;
     }
@@ -200,7 +189,8 @@ export default class Game {
      */
     _onSizeChange(event) {
         this._render.size = event.value;
-        this._gridProcessing.updateSize(this._render.size, this._render.size);
+        this._gridProcessing.updateSize(event.value);
+        this._render.textureData(this._gridProcessing.grid);
 
         this._randomGeneration();
         this._update();
@@ -230,10 +220,9 @@ export default class Game {
         const y = Math.ceil(event.clientY / sizeCellInPix) - 1;
 
         this._gridProcessing.setLife(x, y, 1);
-        this._render.setColorToTextureData(x, y, 1);
         this._gridProcessing.update();
 
-        this._render.applyTextureData();
+        this._render.textureSubData(this._gridProcessing.grid);
     }
 
 }

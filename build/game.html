@@ -88,14 +88,14 @@
             constructor() {
                 super();
                 this.#eventListenerList = /* @__PURE__ */ new Map();
-                this.onEvent = this.onEvent.bind(this);
+                this._onEvent = this._onEvent.bind(this);
             }
             /**
              *
              */
             addEventListener(key, listener) {
                 this.#eventListenerList.set(key, listener);
-                super.addEventListener(key.toString(), this.onEvent);
+                super.addEventListener(key.toString(), this._onEvent);
             }
             /**
              *
@@ -113,7 +113,7 @@
              */
             removeEventListener(key) {
                 this.#eventListenerList.delete(key);
-                super.removeEventListener(key.toString(), this.onEvent);
+                super.removeEventListener(key.toString(), this._onEvent);
             }
             /**
              *

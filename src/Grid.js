@@ -8,16 +8,24 @@ export default class Grid {
 
     _nextGrid;
 
-    constructor(w, h) {
-        this.updateSize(w, h);
+    constructor(size) {
+        this.updateSize(size);
+    }
+
+    /**
+     *
+     * @returns {*}
+     */
+    get grid() {
+        return this._grid;
     }
 
     /**
      *
      */
     reset() {
-        this._grid = new Uint8Array((this._size) * (this._size));
-        this._nextGrid = new Uint8Array((this._size) * (this._size));
+        this._grid = new Uint8Array(this._size * this._size);
+        this._nextGrid = new Uint8Array(this._size * this._size);
     }
 
     /**

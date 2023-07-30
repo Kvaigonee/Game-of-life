@@ -68,6 +68,8 @@ export default class GLPipelineState {
 
         this._gl.clearColor(0.5, 0.5, 0.5, 1);
 
+        this._gl.pixelStorei(this._gl.UNPACK_ALIGNMENT, 1);
+
         //this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
     }
 
@@ -87,17 +89,6 @@ export default class GLPipelineState {
         return this._matrixLocation;
     }*/
 
-    get buffer() {
-        return this._buffer;
-    }
-
-    get texture() {
-        return this._texture;
-    }
-
-    get nextTexture() {
-        return this._nextTexture;
-    }
 
 
     /**
@@ -142,8 +133,6 @@ export default class GLPipelineState {
     _setTextureParams() {
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, this._gl.CLAMP_TO_EDGE);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, this._gl.CLAMP_TO_EDGE);
     }
 
     /**
