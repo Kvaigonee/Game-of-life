@@ -41,10 +41,9 @@ export default class GLRenderer {
         this._pipelineState = new GLPipelineState();
         this._glViewPort = new GLViewport(this._pipelineState.canvas);
 
-        //this._camera = Mat3.translation(0, 0, 0);
-        //this._pipelineState.gl.uniformMatrix3fv(this._pipelineState.matrixLocation, false, this._camera);
+        this._camera = [1, 1, 1];
 
-        this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
+        this._rawTexture = new Uint8Array(this._gridSize * this._gridSize);
 
         this._updateBufferGeometry();
         this._updateTextureSize();
@@ -91,25 +90,21 @@ export default class GLRenderer {
 
     /**
      *
+     */
+    set size(size) {
+        this._gridSize = size;
+
+        this._updateTextureSize();
+    }
+
+    /**
+     *
      * @param x
      * @param y
      * @param val
      */
     setColorToTextureData(x, y, val) {
-        let index = (this._gridSize * y + x) * 4;
-
-        if (val === 0) {
-            this._rawTexture[index++] = 255;
-            this._rawTexture[index++] = 255;
-            this._rawTexture[index++] = 255;
-            this._rawTexture[index] = 255;
-            return;
-        }
-
-        this._rawTexture[index++] = 0;
-        this._rawTexture[index++] = 255;
-        this._rawTexture[index++] = 0;
-        this._rawTexture[index] = 255;
+        this._rawTexture[this._gridSize * y + x] = val;
     }
 
     /**
@@ -122,23 +117,21 @@ export default class GLRenderer {
     /**
      *
      */
-    applyTextureData() {
+    textureSubData(data) {
         this._pipelineState.gl.texSubImage2D(
             this._pipelineState.gl.TEXTURE_2D, 0, 0,
             0, this._gridSize, this._gridSize,
-            this._pipelineState.gl.RGBA, this._pipelineState.gl.UNSIGNED_BYTE,
-            this._rawTexture
+            this._pipelineState.gl.RED, this._pipelineState.gl.UNSIGNED_BYTE,
+            data
         );
     }
 
     /**
      *
+     * @param data
      */
-    set size(size) {
-        this._gridSize = size;
-
-        this._updateBufferGeometry();
-        this._updateTextureSize();
+    textureData(data) {
+        this._updateTextureSize(data);
     }
 
     /**
@@ -152,6 +145,9 @@ export default class GLRenderer {
 
         gl.useProgram(this._pipelineState.program);
 
+        this._pipelineState.gl.uniform3fv(this._pipelineState.transformLocation, this._camera);
+        this._pipelineState.gl.uniform2fv(this._pipelineState.resolutionLocation, new Float32Array([1280, 1280]));
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -161,17 +157,29 @@ export default class GLRenderer {
      */
     _updateBufferGeometry() {
         const bufferData = new Float32Array([
-            -1, -1,
+            0, 0,
             0, 1,
 
-            1, -1,
+            this.viewPort.size, 0,
             1, 1,
 
-            -1, 1,
+            0, this.viewPort.size,
             0, 0,
 
-            1, 1,
+            this.viewPort.size, this.viewPort.size,
             1, 0
+
+            // 0, 0,
+            // 0, 1,
+            //
+            // 1, 0,
+            // 1, 1,
+            //
+            // 0, -1,
+            // 0, 0,
+            //
+            // 1, -1,
+            // 1, 0
         ]);
 
         const gl = this._pipelineState.gl;
@@ -182,19 +190,17 @@ export default class GLRenderer {
      *
      * @private
      */
-    _updateTextureSize() {
-        this._rawTexture = new Uint8Array(this._gridSize * this._gridSize * 4);
+    _updateTextureSize(data) {
         this._pipelineState.gl.texImage2D(
             this._pipelineState.gl.TEXTURE_2D,
             0,
-            this._pipelineState.gl.RGBA,
+            this._pipelineState.gl.R8,
             this._gridSize,
             this._gridSize,
             0,
-            this._pipelineState.gl.RGBA,
+            this._pipelineState.gl.RED,
             this._pipelineState.gl.UNSIGNED_BYTE,
-            null
+            data
         );
     }
-
 }

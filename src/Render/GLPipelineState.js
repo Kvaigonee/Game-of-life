@@ -46,8 +46,13 @@ export default class GLPipelineState {
      *
      * @private
      */
-    //_matrixLocation;
+    _transformLocation;
 
+    /**
+     *
+     * @private
+     */
+    _resolutionLocation;
 
     constructor() {
         this._canvas = this._createCanvas();
@@ -68,7 +73,10 @@ export default class GLPipelineState {
 
         this._gl.clearColor(0.5, 0.5, 0.5, 1);
 
-        //this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
+        this._gl.pixelStorei(this._gl.UNPACK_ALIGNMENT, 1);
+
+        this._transformLocation = this._gl.getUniformLocation(this._program, "u_transform");
+        this._resolutionLocation = this._gl.getUniformLocation(this._program, "u_resolution");
     }
 
     get canvas() {
@@ -83,22 +91,13 @@ export default class GLPipelineState {
         return this._program;
     }
 
-/*    get matrixLocation() {
-        return this._matrixLocation;
-    }*/
-
-    get buffer() {
-        return this._buffer;
+    get transformLocation() {
+        return this._transformLocation;
     }
 
-    get texture() {
-        return this._texture;
+    get resolutionLocation() {
+        return this._resolutionLocation;
     }
-
-    get nextTexture() {
-        return this._nextTexture;
-    }
-
 
     /**
      *
@@ -142,8 +141,6 @@ export default class GLPipelineState {
     _setTextureParams() {
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, this._gl.CLAMP_TO_EDGE);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, this._gl.CLAMP_TO_EDGE);
     }
 
     /**

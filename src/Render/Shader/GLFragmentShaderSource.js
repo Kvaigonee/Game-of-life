@@ -9,7 +9,10 @@ uniform sampler2D u_texture;
 out vec4 outColor;
 
 void main() {
-  outColor = texture(u_texture, v_texcoord);
+
+    vec4 texData = texture(u_texture, v_texcoord);
+    
+    outColor = vec4(0, texData.r * 255.0, 0, 1);
 }`;
 
 export default GLFragmentShaderSource;

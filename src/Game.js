@@ -17,6 +17,8 @@ export default class Game {
 
     _updateInSecond;
 
+    _moveStep = 10;
+
     constructor() {
         this._render = new GLRenderer();
 
@@ -26,7 +28,7 @@ export default class Game {
 
         this._initListeners();
 
-        this._gridProcessing = new Grid(this._render.size, this._render.size);
+        this._gridProcessing = new Grid(this._render.size);
 
         this._randomGeneration();
         this._update();
@@ -43,9 +45,6 @@ export default class Game {
             for (let y = 0; y < this._render.size; y++) {
                 const val = Math.random() < 0.7 ? 0 : 1;
                 this._gridProcessing.setLife(x, y, val);
-
-                if (val === 0) continue;
-                this._render.setColorToTextureData(x, y, val);
             }
         }
         this._gridProcessing.update();
@@ -62,10 +61,6 @@ export default class Game {
                 let m = this._gridProcessing.getNeighborCount(x, y);
                 if (m === 3) {
                     this._gridProcessing.setLife(x, y, 1);
-
-                    if (this._gridProcessing.getLife(x, y) !== 1) {
-                        this._render.setColorToTextureData(x, y, 1);
-                    }
                     continue;
                 }
                 if (m === 2) {
@@ -75,15 +70,11 @@ export default class Game {
                 }
 
                 this._gridProcessing.setLife(x, y, 0);
-
-                if (this._gridProcessing.getLife(x, y) !== 0) {
-                    this._render.setColorToTextureData(x, y, 0);
-                }
             }
         }
 
-        this._render.applyTextureData();
         this._gridProcessing.update();
+        this._render.textureSubData(this._gridProcessing.grid);
 
         this._inputHandler.generationTime = Date.now() - time;
     }
@@ -94,6 +85,7 @@ export default class Game {
      */
     _repaint() {
         requestAnimationFrame(() => {
+
            this._render.draw();
            this._repaint();
         });
@@ -110,6 +102,11 @@ export default class Game {
         this._onRandom = this._onRandom.bind(this);
         this._onSizeChange = this._onSizeChange.bind(this);
         this._onSpeedChange = this._onSpeedChange.bind(this);
+        this._onLeft = this._onLeft.bind(this);
+        this._onRight = this._onRight.bind(this);
+        this._onTop = this._onTop.bind(this);
+        this._onBottom = this._onBottom.bind(this);
+        this._onScale = this._onScale.bind(this);
 
         this._inputHandler.addEventListener("start", this._onStart);
         this._inputHandler.addEventListener("stop", this._onStop);
@@ -117,7 +114,22 @@ export default class Game {
         this._inputHandler.addEventListener("random", this._onRandom);
         this._inputHandler.addEventListener("sizeChange", this._onSizeChange);
         this._inputHandler.addEventListener("speedChange", this._onSpeedChange);
+        this._inputHandler.addEventListener("scaleChange", this._onScale);
 
+        this._inputHandler.addEventListener("left", this._onLeft);
+        this._inputHandler.addEventListener("right", this._onRight);
+        this._inputHandler.addEventListener("top", this._onTop);
+        this._inputHandler.addEventListener("bottom", this._onBottom);
+
+
+        this._initCanvasListeners();
+    }
+
+    /**
+     *
+     * @private
+     */
+    _initCanvasListeners() {
         let wasDown = false;
 
         this._render.canvas.addEventListener("mousedown", () => {
@@ -195,12 +207,21 @@ export default class Game {
 
     /**
      *
+     * @private
+     */
+    _onScale(event) {
+        this._render.camera[2] = event.value;
+    }
+
+    /**
+     *
      * @param event{{value:number}}
      * @private
      */
     _onSizeChange(event) {
         this._render.size = event.value;
-        this._gridProcessing.updateSize(this._render.size, this._render.size);
+        this._gridProcessing.updateSize(event.value);
+        this._render.textureData(this._gridProcessing.grid);
 
         this._randomGeneration();
         this._update();
@@ -221,19 +242,55 @@ export default class Game {
      *
      * @private
      */
+    _onLeft() {
+        this._render.camera[0] += this._moveStep;
+    }
+
+    /**
+     *
+     * @private
+     */
+    _onRight() {
+        this._render.camera[0] -= this._moveStep;
+    }
+
+
+    /**
+     *
+     * @private
+     */
+    _onTop() {
+        this._render.camera[1] -= this._moveStep;
+    }
+
+    /**
+     *
+     * @private
+     */
+    _onBottom() {
+        this._render.camera[1] += this._moveStep;
+    }
+
+    /**
+     *
+     * @private
+     */
     _applyEventCoordinates(event) {
         if (this._startProcess !== undefined) return;
 
-        const sizeCellInPix = this._render.viewPort.size / this._render.size;
+        const viewSize = this._render.viewPort.size * this._render.camera[2];
 
-        const x = Math.ceil(event.clientX / sizeCellInPix) - 1;
-        const y = Math.ceil(event.clientY / sizeCellInPix) - 1;
+        const sizeCellInPix = viewSize / this._render.size; // this._render.camera[2]);
+
+        let x = event.clientX - this._render.camera[0];
+        let y = viewSize - event.clientY - this._render.camera[1];
+
+        x = Math.ceil(x / sizeCellInPix) - 1;
+        y = Math.ceil(y / sizeCellInPix) - 1;
 
         this._gridProcessing.setLife(x, y, 1);
-        this._render.setColorToTextureData(x, y, 1);
         this._gridProcessing.update();
 
-        this._render.applyTextureData();
+        this._render.textureSubData(this._gridProcessing.grid);
     }
-
 }

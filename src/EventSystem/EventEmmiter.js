@@ -1,27 +1,28 @@
-
-
+/**
+ *
+ */
 export default class EventEmitter extends EventTarget {
 
     /**
      *
      */
-    #eventListenerList;
+    _eventListenerList;
 
     /**
      *
      */
     constructor() {
         super();
-        this.#eventListenerList = new Map();
-        this.onEvent = this.onEvent.bind(this);
+        this._eventListenerList = new Map();
+        this._onEvent = this._onEvent.bind(this);
     }
 
     /**
      *
      */
     addEventListener(key, listener) {
-        this.#eventListenerList.set(key, listener);
-        super.addEventListener(key.toString(), this.onEvent);
+        this._eventListenerList.set(key, listener);
+        super.addEventListener(key.toString(), this._onEvent);
     }
 
     /**
@@ -40,15 +41,15 @@ export default class EventEmitter extends EventTarget {
      * @param key
      */
     removeEventListener(key) {
-        this.#eventListenerList.delete(key);
-        super.removeEventListener(key.toString(), this.onEvent);
+        this._eventListenerList.delete(key);
+        super.removeEventListener(key.toString(), this._onEvent);
     }
 
     /**
      *
      */
-    onEvent(evt) {
-        const callBack = this.#eventListenerList.get(evt.type);
+    _onEvent(evt) {
+        const callBack = this._eventListenerList.get(evt.type);
         if (!callBack) return;
 
         callBack(evt.detail);
