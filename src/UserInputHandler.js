@@ -26,6 +26,8 @@ export default class UserInputHandler extends EventEmitter {
 
         this._initButtons();
         this._initInputs();
+        this._initKeyListeners();
+
 
         this._lastGenarationTime = this._protectedGetElemById("time");
     }
@@ -35,7 +37,7 @@ export default class UserInputHandler extends EventEmitter {
     }
 
     get speed() {
-        return +this._speedValue.value;
+        return +this._speedInput.value;
     }
 
     set generationTime(value) {
@@ -49,12 +51,15 @@ export default class UserInputHandler extends EventEmitter {
     _initInputs() {
         this._sizeInput = this._protectedGetElemById("size");
         this._speedInput = this._protectedGetElemById("speed");
+        this._scaleInput = this._protectedGetElemById("scale");
 
         this._sizeValue = this._protectedGetElemById("size-value");
         this._speedValue = this._protectedGetElemById("speed-value");
+        this._scaleValue = this._protectedGetElemById("scale-value");
 
         this._sizeValue.textContent = this._sizeInput.value + "X" + this._sizeInput.value;
         this._speedValue.textContent = this._speedInput.value + " updates in second";
+        this._scaleValue.textContent = this._scaleInput.value;
 
         this._sizeInput.addEventListener("input", (event) => {
             this._sizeValue.textContent = event.target.value + "X" + event.target.value;
@@ -64,12 +69,20 @@ export default class UserInputHandler extends EventEmitter {
             this._speedValue.textContent = event.target.value + " updates in second";
         });
 
+        this._scaleInput.addEventListener("input", (event) => {
+            this._scaleValue.textContent = event.target.value;
+        });
+
         this._sizeInput.addEventListener("change", (event) => {
             this.dispatchEvent("sizeChange", {value: +event.target.value});
         });
 
         this._speedInput.addEventListener("change", (event) => {
             this.dispatchEvent("speedChange", {value: +event.target.value});
+        });
+
+        this._scaleInput.addEventListener("change", (event) => {
+            this.dispatchEvent("scaleChange", {value: +event.target.value});
         });
     }
 
@@ -102,6 +115,29 @@ export default class UserInputHandler extends EventEmitter {
         this._randomButton.addEventListener("click", () => {
 
             this.dispatchEvent("random");
+        });
+    }
+
+    /**
+     *
+     * @private
+     */
+    _initKeyListeners() {
+        document.addEventListener("keydown", (event) => {
+            switch (event.code) {
+                case "KeyA":
+                    this.dispatchEvent("left");
+                    break;
+                case "KeyD":
+                    this.dispatchEvent("right");
+                    break;
+                case "KeyW":
+                    this.dispatchEvent("top");
+                    break;
+                case "KeyS":
+                    this.dispatchEvent("bottom");
+                    break;
+            }
         });
     }
 

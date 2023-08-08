@@ -41,8 +41,7 @@ export default class GLRenderer {
         this._pipelineState = new GLPipelineState();
         this._glViewPort = new GLViewport(this._pipelineState.canvas);
 
-        //this._camera = Mat3.translation(0, 0, 0);
-        //this._pipelineState.gl.uniformMatrix3fv(this._pipelineState.matrixLocation, false, this._camera);
+        this._camera = [1, 1, 1];
 
         this._rawTexture = new Uint8Array(this._gridSize * this._gridSize);
 
@@ -146,6 +145,9 @@ export default class GLRenderer {
 
         gl.useProgram(this._pipelineState.program);
 
+        this._pipelineState.gl.uniform3fv(this._pipelineState.transformLocation, this._camera);
+        this._pipelineState.gl.uniform2fv(this._pipelineState.resolutionLocation, new Float32Array([1280, 1280]));
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -155,17 +157,29 @@ export default class GLRenderer {
      */
     _updateBufferGeometry() {
         const bufferData = new Float32Array([
-            -1, -1,
+            0, 0,
             0, 1,
 
-            1, -1,
+            this.viewPort.size, 0,
             1, 1,
 
-            -1, 1,
+            0, this.viewPort.size,
             0, 0,
 
-            1, 1,
+            this.viewPort.size, this.viewPort.size,
             1, 0
+
+            // 0, 0,
+            // 0, 1,
+            //
+            // 1, 0,
+            // 1, 1,
+            //
+            // 0, -1,
+            // 0, 0,
+            //
+            // 1, -1,
+            // 1, 0
         ]);
 
         const gl = this._pipelineState.gl;

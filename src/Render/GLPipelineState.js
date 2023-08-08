@@ -46,8 +46,13 @@ export default class GLPipelineState {
      *
      * @private
      */
-    //_matrixLocation;
+    _transformLocation;
 
+    /**
+     *
+     * @private
+     */
+    _resolutionLocation;
 
     constructor() {
         this._canvas = this._createCanvas();
@@ -70,7 +75,8 @@ export default class GLPipelineState {
 
         this._gl.pixelStorei(this._gl.UNPACK_ALIGNMENT, 1);
 
-        //this._matrixLocation = this._gl.getUniformLocation(this._program, "u_matrix");
+        this._transformLocation = this._gl.getUniformLocation(this._program, "u_transform");
+        this._resolutionLocation = this._gl.getUniformLocation(this._program, "u_resolution");
     }
 
     get canvas() {
@@ -85,11 +91,13 @@ export default class GLPipelineState {
         return this._program;
     }
 
-/*    get matrixLocation() {
-        return this._matrixLocation;
-    }*/
+    get transformLocation() {
+        return this._transformLocation;
+    }
 
-
+    get resolutionLocation() {
+        return this._resolutionLocation;
+    }
 
     /**
      *
